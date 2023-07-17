@@ -77,6 +77,84 @@ inline int8_t Square::totalAvailable() {
 }
 
 // *****************************************************************************
+// BlockInfo methods
+// *****************************************************************************
+
+// Initializes a block. DOES NOT INITIALIZE THE POSITION ARRAY OR THE BLOCK BOARD.
+Block::Block() {
+    size = 0;
+}
+
+// Appends a new position to the block.
+inline void Block::append(Position pos) {
+    if (size > MAX_VALUE + MIN_VALUE - 1)
+        throw std::runtime_error("Block::append: to many positions in block.\n");
+    positions[size] = pos;
+    size++;
+}
+
+// Returns an iterator to the beginning of the block.
+inline Position* Block::begin() {
+    return &positions[0];
+}
+
+// Returns the past-the-end iterator of the block.
+inline Position* Block::end() {
+    constexpr int endIdx = MAX_VALUE + MIN_VALUE - 2;
+    Position* res = &positions[endIdx];
+    res++;
+    return res;
+}
+
+// *****************************************************************************
+// BlockInfo methods
+// *****************************************************************************
+
+// Initializes blocks which represent all the positions belonging to
+// a certain block and the blockBoard which maps row, column -> block.
+BlockInfo::BlockInfo() {
+    int blockWidth = BOARD_ROWS / 3;
+    int blockHeight = BOARD_COLUMNS / 3;
+    if (BOARD_ROWS % 2 || BOARD_COLUMNS % 2)
+        throw std::runtime_error("Board must have odd measurements.\n");
+    if (BOARD_ROWS != BOARD_COLUMNS)
+        throw std::runtime_error("Board must be square.\n");
+    for (int rowRepeat = 0, block = 0; rowRepeat < 3; rowRepeat++) {
+        for (int i = rowRepeat * blockHeight; i < (rowRepeat + 1) * blockHeight; i++) {
+            int currentBlock = block;
+            for (int columnRepeat = 0; columnRepeat < 3; columnRepeat++) {
+                for (int j = columnRepeat * blockWidth; j < (columnRepeat + 1) * blockWidth; j++) {
+                    Position newPos(i, j, UNFILLED);
+                    blockBoard[i][j] = currentBlock;
+                    blocks[currentBlock].append(newPos);
+                }
+                currentBlock++;
+            }
+        }
+    }
+}
+
+// Returns the block of a given position.
+inline int8_t BlockInfo::getBlock(Position& pos) {
+    return getBlock(pos.getRow(), pos.getColumn());
+}
+
+// Returns the block of a given position.
+inline int8_t BlockInfo::getBlock(int8_t row, int8_t column) {
+    return blockBoard[row][column];
+}
+
+// Returns an iterator to the first element of the block in blocks.
+inline Position* BlockInfo::begin(int8_t block) {
+    return blocks[block].begin();
+}
+
+// Returns the past-the-end iterator of the block in blocks.
+inline Position* BlockInfo::end(int8_t block) {
+    return blocks[block].end();
+}
+
+// *****************************************************************************
 // Board methods
 // *****************************************************************************
 
