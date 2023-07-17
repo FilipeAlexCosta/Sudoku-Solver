@@ -168,6 +168,24 @@ Board::Board() {
     }
 }
 
+// Converts 
+void Board::boardString(std::string& str) {
+    int8_t row = 0, column = 0;
+    constexpr int boardSize = BOARD_ROWS * BOARD_COLUMNS;
+    if (str.size() != boardSize)
+        throw std::runtime_error("Board::boardString: too few/many elements to insert.\n");
+    for (auto it = str.begin(); it != str.end(); ++it) {
+        if ((*it) != EMPTY_SQUARE)
+            insert(row, column, (*it) - '0');
+        if (column != BOARD_COLUMNS) {
+            column++;
+            continue;
+        }
+        column = 0;
+        row++;
+    }
+}
+
 // Prints the sudoku board.
 void Board::print() {
     for (int i = 0; i < BOARD_ROWS; i++) {
@@ -185,27 +203,49 @@ void Board::print() {
 }
 
 // Inserts a new value in the Board.
-void Board::insert(Position& pos) {
-    matrix[pos.getRow()][pos.getColumn()].setValue(pos.getValue());
+inline void Board::insert(Position& pos) {
+    insert(pos.getRow(), pos.getColumn(), pos.getValue());
 }
 
 // Inserts a new value in the Board.
 void Board::insert(int8_t row, int8_t column, int8_t value) {
     matrix[row][column].setValue(value);
+    update(row, column, value, false);
 }
 
-// Updates the availability of other squares in the same row.
-void Board::updateRow(int8_t row, int8_t value, bool availability) {
-    if (value < MIN_VALUE || value > MAX_VALUE)
-        throw std::runtime_error("Board::updateRow: value out of range.");
+// Updates the availability of all squares in the row.
+inline void Board::updateRow(int8_t row, int8_t value, bool availability) {
     for (int j = 0; j < BOARD_COLUMNS; j++)
         matrix[row][j].updateAvailable(value, availability);
 }
 
-// Updates the availability of other squares in the same column.
-void Board::updateColumn(int8_t column, int8_t value, bool availability) {
-    if (value < MIN_VALUE || value > MAX_VALUE)
-        throw std::runtime_error("Board::updateColumn: value out of range.");
+// Updates the availability of all squares in the column.
+inline void Board::updateColumn(int8_t column, int8_t value, bool availability) {
     for (int i = 0; i < BOARD_ROWS; i++)
         matrix[i][column].updateAvailable(value, availability);
+}
+
+// Updates the availability of all squares in the block.
+inline void Board::updateBlock(int8_t block, int8_t value, bool availability) {
+    for (auto it = blocks.begin(block); it != blocks.end(block); ++it)
+        matrix[it->getRow()][it->getColumn()].updateAvailable(value, availability);
+}
+
+// Updates the availability of all squares in the affected area of the given row
+// and column (including the associated block).
+void Board::update(int8_t row, int8_t column, int8_t value, bool availability) {
+    if (value < MIN_VALUE || value > MAX_VALUE)
+        throw std::runtime_error("Board::update: value out of range.");
+    if (!inBounds(row, column))
+        throw std::runtime_error("Board::update: position out of board.\n");
+    updateRow(row, value, availability);
+    updateColumn(column, value, availability);
+    updateBlock(blocks.getBlock(row, column), value, availability);
+}
+
+// Checks whether or not a position is within bounds.
+bool Board::inBounds(int8_t row, int8_t column) {
+    if (row < 0 || row > BOARD_ROWS) return 0;
+    if (column < 0 || column > BOARD_COLUMNS) return 0;
+    return 1;
 }

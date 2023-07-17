@@ -2,6 +2,7 @@
 #define BOARD_H
 
 #include <array>
+#include <string>
 
 #define BOARD_ROWS 9
 #define BOARD_COLUMNS 9
@@ -62,15 +63,18 @@ class BlockInfo {
 class Board {
     public:
         Board();
+        void boardString(std::string& str);
         void print();
-        void insert(Position& pos);
+        inline void insert(Position& pos);
         void insert(int8_t row, int8_t column, int8_t value);
     private:
         Square matrix[BOARD_ROWS][BOARD_COLUMNS];
         BlockInfo blocks;
-        void updateRow(int8_t row, int8_t value, bool availability);
-        void updateColumn(int8_t row, int8_t value, bool availability);
-        void updateBlock();
+        inline void updateRow(int8_t row, int8_t value, bool availability);
+        inline void updateColumn(int8_t row, int8_t value, bool availability);
+        inline void updateBlock(int8_t block, int8_t value, bool availability);
+        void update(int8_t row, int8_t column, int8_t value, bool availability);
+        bool inBounds(int8_t row, int8_t column);
 };
 
 #endif
