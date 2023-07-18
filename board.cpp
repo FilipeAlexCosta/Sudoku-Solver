@@ -5,25 +5,32 @@
 // Position methods
 // *****************************************************************************
 
+// Initializes an undefined position.
+Position::Position() {
+    row = UNDEFINED;
+    column = UNDEFINED;
+    value = UNDEFINED;
+}
+
 // Initializes a positon.
-Position::Position(int8_t setRow, int8_t setColumn, int8_t setValue) {
+Position::Position(int16_t setRow, int16_t setColumn, int16_t setValue) {
     row = setRow;
     column = setColumn;
     value = setValue;
 }
 
 // Returns the row of a position.
-inline int8_t Position::getRow() {
+inline int16_t Position::getRow() {
     return row;
 }
 
 // Returns the column of a position.
-inline int8_t Position::getColumn() {
+inline int16_t Position::getColumn() {
     return column;
 }
 
 // Returns the value of a position.
-inline int8_t Position::getValue() {
+inline int16_t Position::getValue() {
     return value;
 }
 
@@ -42,14 +49,14 @@ Square::Square() {
 }
 
 // Returns the value of the square.
-inline int8_t Square::getValue() {
+inline int16_t Square::getValue() {
     return value;
 }
 
 // Sets the value of the square.
 // Returns true if a new value was set, false otherwise.
 // If the value is not in range, throws std::runtime_error.
-bool Square::setValue(int8_t setValue) {
+bool Square::setValue(int16_t setValue) {
     if (setValue < MIN_VALUE || setValue > MAX_VALUE)
         throw std::runtime_error("Square::setValue: value out of range.");
     if (setValue != UNFILLED && !isAvailable(setValue))
@@ -60,19 +67,19 @@ bool Square::setValue(int8_t setValue) {
 
 // Removes a possible value for the square.
 // If the value is out of range, causes undefined behaviour.
-inline void Square::updateAvailable(int8_t unavailableValue, bool availability) {
+inline void Square::updateAvailable(int16_t unavailableValue, bool availability) {
     available[unavailableValue] = availability;
     availableQuant = availableQuant - 1 * (!availability);
 }
 
 // Returns whether a value is available or not.
 // If the value is out of range, causes undefined behaviour.
-inline bool Square::isAvailable(int8_t unavailabeValue) {
+inline bool Square::isAvailable(int16_t unavailabeValue) {
     return available[unavailabeValue];
 }
 
 // Returns the total number of available values for the square.
-inline int8_t Square::totalAvailable() {
+inline int16_t Square::totalAvailable() {
     return availableQuant;
 }
 
@@ -80,7 +87,7 @@ inline int8_t Square::totalAvailable() {
 // BlockInfo methods
 // *****************************************************************************
 
-// Initializes a block. DOES NOT INITIALIZE THE POSITION ARRAY OR THE BLOCK BOARD.
+// Initializes a block. DOES NOT INITIALIZE THE POSITION ARRAY.
 Block::Block() {
     size = 0;
 }
@@ -100,8 +107,7 @@ inline Position* Block::begin() {
 
 // Returns the past-the-end iterator of the block.
 inline Position* Block::end() {
-    constexpr int endIdx = MAX_VALUE + MIN_VALUE - 2;
-    Position* res = &positions[endIdx];
+    Position* res = &positions[MAX_VALUE + MIN_VALUE - 2];
     res++;
     return res;
 }
@@ -115,10 +121,10 @@ inline Position* Block::end() {
 BlockInfo::BlockInfo() {
     int blockWidth = BOARD_ROWS / 3;
     int blockHeight = BOARD_COLUMNS / 3;
-    if (BOARD_ROWS % 2 || BOARD_COLUMNS % 2)
-        throw std::runtime_error("Board must have odd measurements.\n");
     if (BOARD_ROWS != BOARD_COLUMNS)
         throw std::runtime_error("Board must be square.\n");
+    if (!(BOARD_ROWS % 2))
+        throw std::runtime_error("Board must have odd measurements.\n");
     for (int rowRepeat = 0, block = 0; rowRepeat < 3; rowRepeat++) {
         for (int i = rowRepeat * blockHeight; i < (rowRepeat + 1) * blockHeight; i++) {
             int currentBlock = block;
@@ -135,22 +141,22 @@ BlockInfo::BlockInfo() {
 }
 
 // Returns the block of a given position.
-inline int8_t BlockInfo::getBlock(Position& pos) {
+inline int16_t BlockInfo::getBlock(Position& pos) {
     return getBlock(pos.getRow(), pos.getColumn());
 }
 
 // Returns the block of a given position.
-inline int8_t BlockInfo::getBlock(int8_t row, int8_t column) {
+inline int16_t BlockInfo::getBlock(int16_t row, int16_t column) {
     return blockBoard[row][column];
 }
 
 // Returns an iterator to the first element of the block in blocks.
-inline Position* BlockInfo::begin(int8_t block) {
+inline Position* BlockInfo::begin(int16_t block) {
     return blocks[block].begin();
 }
 
 // Returns the past-the-end iterator of the block in blocks.
-inline Position* BlockInfo::end(int8_t block) {
+inline Position* BlockInfo::end(int16_t block) {
     return blocks[block].end();
 }
 
@@ -170,14 +176,14 @@ Board::Board() {
 
 // Converts 
 void Board::boardString(std::string& str) {
-    int8_t row = 0, column = 0;
+    int16_t row = 0, column = 0;
     constexpr int boardSize = BOARD_ROWS * BOARD_COLUMNS;
     if (str.size() != boardSize)
         throw std::runtime_error("Board::boardString: too few/many elements to insert.\n");
     for (auto it = str.begin(); it != str.end(); ++it) {
         if ((*it) != EMPTY_SQUARE)
             insert(row, column, (*it) - '0');
-        if (column != BOARD_COLUMNS) {
+        if (column != BOARD_COLUMNS - 1) {
             column++;
             continue;
         }
@@ -208,32 +214,32 @@ inline void Board::insert(Position& pos) {
 }
 
 // Inserts a new value in the Board.
-void Board::insert(int8_t row, int8_t column, int8_t value) {
+void Board::insert(int16_t row, int16_t column, int16_t value) {
     matrix[row][column].setValue(value);
     update(row, column, value, false);
 }
 
 // Updates the availability of all squares in the row.
-inline void Board::updateRow(int8_t row, int8_t value, bool availability) {
+inline void Board::updateRow(int16_t row, int16_t value, bool availability) {
     for (int j = 0; j < BOARD_COLUMNS; j++)
         matrix[row][j].updateAvailable(value, availability);
 }
 
 // Updates the availability of all squares in the column.
-inline void Board::updateColumn(int8_t column, int8_t value, bool availability) {
+inline void Board::updateColumn(int16_t column, int16_t value, bool availability) {
     for (int i = 0; i < BOARD_ROWS; i++)
         matrix[i][column].updateAvailable(value, availability);
 }
 
 // Updates the availability of all squares in the block.
-inline void Board::updateBlock(int8_t block, int8_t value, bool availability) {
+inline void Board::updateBlock(int16_t block, int16_t value, bool availability) {
     for (auto it = blocks.begin(block); it != blocks.end(block); ++it)
         matrix[it->getRow()][it->getColumn()].updateAvailable(value, availability);
 }
 
 // Updates the availability of all squares in the affected area of the given row
 // and column (including the associated block).
-void Board::update(int8_t row, int8_t column, int8_t value, bool availability) {
+void Board::update(int16_t row, int16_t column, int16_t value, bool availability) {
     if (value < MIN_VALUE || value > MAX_VALUE)
         throw std::runtime_error("Board::update: value out of range.");
     if (!inBounds(row, column))
@@ -244,7 +250,7 @@ void Board::update(int8_t row, int8_t column, int8_t value, bool availability) {
 }
 
 // Checks whether or not a position is within bounds.
-bool Board::inBounds(int8_t row, int8_t column) {
+bool Board::inBounds(int16_t row, int16_t column) {
     if (row < 0 || row > BOARD_ROWS) return 0;
     if (column < 0 || column > BOARD_COLUMNS) return 0;
     return 1;
