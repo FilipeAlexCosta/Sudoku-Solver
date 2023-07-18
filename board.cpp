@@ -34,6 +34,11 @@ inline int16_t Position::getValue() {
     return value;
 }
 
+// Prints a position.
+inline void Position::print() {
+    std::cout << '(' << row << ", " << column << ", " << value << ")'\n";
+}
+
 // *****************************************************************************
 // Square methods
 // *****************************************************************************
@@ -160,6 +165,27 @@ inline Position* BlockInfo::end(int16_t block) {
     return blocks[block].end();
 }
 
+// Prints all the block groups to the cout.
+void BlockInfo::printBlocks() {
+    for (int i = 0; i < BOARD_BLOCKS; i++) {
+        for (auto it = blocks[i].begin(); it != blocks[i].end(); ++it) {
+            it->print();
+            std::cout << ' ';
+        }
+        std::cout << '\n';
+    }
+}
+
+// Prints the blockBoard to the cout.
+void BlockInfo::printBlockBoard() {
+    for (int i = 0; i < BOARD_ROWS; i++) {
+        for (int j = 0; j < BOARD_COLUMNS; j++) {
+            std::cout << blockBoard[i][j] << ' ';
+        }
+        std::cout << '\n';
+    }
+}
+
 // *****************************************************************************
 // Board methods
 // *****************************************************************************
@@ -255,4 +281,12 @@ bool Board::inBounds(int16_t row, int16_t column) {
     if (row < 0 || row > BOARD_ROWS) return 0;
     if (column < 0 || column > BOARD_COLUMNS) return 0;
     return 1;
+}
+
+// Returns the block info of the board.
+void Board::blockInfo() {
+    blocks.printBlocks();
+    std::cout << "\n\n";
+    blocks.printBlockBoard();
+    std::cout << '\n';
 }

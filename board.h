@@ -20,6 +20,7 @@ class Position {
         inline int16_t getRow();
         inline int16_t getColumn();
         inline int16_t getValue();
+        inline void print();
     private:
         int16_t row, column, value;
 };
@@ -56,6 +57,8 @@ class BlockInfo {
         inline int16_t getBlock(int16_t row, int16_t column);
         inline Position* begin(int16_t block);
         inline Position* end(int16_t block);
+        void printBlockBoard();
+        void printBlocks();
     private:
         Block blocks[BOARD_BLOCKS];
         int16_t blockBoard[BOARD_BLOCKS][BOARD_COLUMNS];
@@ -68,6 +71,7 @@ class Board {
         void print();
         inline void insert(Position& pos);
         void insert(int16_t row, int16_t column, int16_t value);
+        void blockInfo();
     private:
         Square matrix[BOARD_ROWS][BOARD_COLUMNS];
         BlockInfo blocks;

@@ -6,6 +6,7 @@ int main() {
     std::string line;
     std::getline(std::cin, line);
     myBoard.boardString(line);
+    myBoard.blockInfo();
     myBoard.print();
     return 0;
 }
