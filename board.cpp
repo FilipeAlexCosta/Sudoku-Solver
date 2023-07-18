@@ -195,16 +195,17 @@ void Board::boardString(std::string& str) {
 // Prints the sudoku board.
 void Board::print() {
     for (int i = 0; i < BOARD_ROWS; i++) {
-        for (int j = 0; j < (BOARD_COLUMNS - 1); j++) {
-            if (matrix[i][j].getValue() != UNFILLED)
-                std::cout << matrix[i][j].getValue() << '-';
-            else
-                std::cout << EMPTY_SQUARE << '-';
+        for (int j = 0; j < (BOARD_COLUMNS); j++) {
+            std::cout << matrix[i][j].getValue();
+            if ((j + 1) % 3) std::cout << ' ';
+            if (!((j + 1) % 3) && j != BOARD_COLUMNS - 1) std::cout << '|';
         }
-        if (matrix[i][BOARD_COLUMNS - 1].getValue() != UNFILLED)
-            std::cout << matrix[i][BOARD_COLUMNS - 1].getValue() << '\n';
-        else
-            std::cout << EMPTY_SQUARE << '\n';
+        std::cout << '\n';
+        if (!((i + 1) % 3) && i != BOARD_ROWS - 1) {
+            for (int k = 0; k < BOARD_COLUMNS + 8; k++)
+                std::cout << '-';
+            std::cout << '\n';
+        }
     }
 }
 
