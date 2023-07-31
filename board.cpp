@@ -36,7 +36,7 @@ inline int16_t Position::getValue() {
 
 // Prints a position.
 inline void Position::print() {
-    std::cout << '(' << row << ", " << column << ", " << value << ")'\n";
+    std::cout << '(' << row << ", " << column << ", " << value << ")\n";
 }
 
 // *****************************************************************************
@@ -79,8 +79,8 @@ inline void Square::updateAvailable(int16_t unavailableValue, bool availability)
 
 // Returns whether a value is available or not.
 // If the value is out of range, causes undefined behaviour.
-inline bool Square::isAvailable(int16_t unavailabeValue) {
-    return available[unavailabeValue];
+inline bool Square::isAvailable(int16_t unavailableValue) {
+    return available[unavailableValue];
 }
 
 // Returns the total number of available values for the square.
@@ -130,7 +130,7 @@ BlockInfo::BlockInfo() {
         throw std::runtime_error("Board must be square.\n");
     if (!(BOARD_ROWS % 2))
         throw std::runtime_error("Board must have odd measurements.\n");
-    for (int rowRepeat = 0, block = 0; rowRepeat < 3; rowRepeat++) {
+    for (int rowRepeat = 0, block = 0; rowRepeat < 3; rowRepeat++, block += 3) {
         for (int i = rowRepeat * blockHeight; i < (rowRepeat + 1) * blockHeight; i++) {
             int currentBlock = block;
             for (int columnRepeat = 0; columnRepeat < 3; columnRepeat++) {
@@ -168,10 +168,8 @@ inline Position* BlockInfo::end(int16_t block) {
 // Prints all the block groups to the cout.
 void BlockInfo::printBlocks() {
     for (int i = 0; i < BOARD_BLOCKS; i++) {
-        for (auto it = blocks[i].begin(); it != blocks[i].end(); ++it) {
+        for (auto it = blocks[i].begin(); it != blocks[i].end(); ++it)
             it->print();
-            std::cout << ' ';
-        }
         std::cout << '\n';
     }
 }
@@ -246,6 +244,19 @@ void Board::insert(int16_t row, int16_t column, int16_t value) {
     update(row, column, value, false);
 }
 
+// Removes a value in the Board.
+inline void Board::remove(Position& pos) {
+    remove(pos.getRow(), pos.getColumn());
+}
+
+// Removes a value in the Board.
+void Board::remove(int16_t row, int16_t column) {
+    if (matrix[row][column].getValue() == UNDEFINED)
+        throw std::runtime_error("Board::remove: the selected square was not set in the first place.\n");
+    update(row, column, matrix[row][column].getValue(), true);
+    matrix[row][column].setValue(UNDEFINED);
+}
+
 // Updates the availability of all squares in the row.
 inline void Board::updateRow(int16_t row, int16_t value, bool availability) {
     for (int j = 0; j < BOARD_COLUMNS; j++)
@@ -278,15 +289,15 @@ void Board::update(int16_t row, int16_t column, int16_t value, bool availability
 
 // Checks whether or not a position is within bounds.
 bool Board::inBounds(int16_t row, int16_t column) {
-    if (row < 0 || row > BOARD_ROWS) return 0;
-    if (column < 0 || column > BOARD_COLUMNS) return 0;
-    return 1;
+    if (row < 0 || row > BOARD_ROWS) return false;
+    if (column < 0 || column > BOARD_COLUMNS) return false;
+    return true;
 }
 
 // Returns the block info of the board.
 void Board::blockInfo() {
     blocks.printBlocks();
-    std::cout << "\n\n";
+    std::cout << "\n";
     blocks.printBlockBoard();
     std::cout << '\n';
 }

@@ -31,7 +31,7 @@ class Square {
         inline int16_t getValue();
         bool setValue(int16_t setValue);
         inline void updateAvailable(int16_t unavailableValue, bool availability);
-        inline bool isAvailable(int16_t unavailabeValue);
+        inline bool isAvailable(int16_t unavailableValue);
         inline int16_t totalAvailable();
     private:
         int16_t value;
@@ -71,6 +71,8 @@ class Board {
         void print();
         inline void insert(Position& pos);
         void insert(int16_t row, int16_t column, int16_t value);
+        inline void remove(Position& pos);
+        void remove(int16_t row, int16_t column);
         void blockInfo();
     private:
         Square matrix[BOARD_ROWS][BOARD_COLUMNS];
