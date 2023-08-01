@@ -49,8 +49,14 @@ Square::Square() {
     availableQuant = MAX_VALUE - MIN_VALUE + 1;
     for (int i = 0; i < MIN_VALUE; i++)
         available[i] = false;
-    for (int i = MIN_VALUE; i < MAX_VALUE + MIN_VALUE; i++)
+    for (int i = MIN_VALUE; i <= MAX_VALUE; i++)
         available[i] = true;
+}
+
+// Returns true if the square's value has been set, false otherwise.
+inline bool Square::hasValue() {
+    if (value < MIN_VALUE || value > MAX_VALUE) return false;
+    return true;
 }
 
 // Returns the value of the square.
@@ -88,6 +94,16 @@ inline bool Square::isAvailable(int16_t unavailableValue) {
 // Returns the total number of available values for the square.
 inline int16_t Square::totalAvailable() {
     return availableQuant;
+}
+
+// Returns an iterator to the beginning of the availability container.
+inline bool* Square::begin() {
+    return &available[MIN_VALUE];
+}
+
+// Returns the past-the-end iterator of the availability container.
+inline bool* Square::end() {
+    return (&available[MAX_VALUE]) + 1;
 }
 
 // *****************************************************************************
@@ -200,7 +216,7 @@ Board::Board() {
     }
 }
 
-// Converts 
+// Converts a board string into a board object.
 void Board::boardString(std::string& str) {
     int16_t row = 0, column = 0;
     constexpr int boardSize = BOARD_ROWS * BOARD_COLUMNS;
@@ -216,6 +232,19 @@ void Board::boardString(std::string& str) {
         column = 0;
         row++;
     }
+}
+
+std::string Board::getBoardString() {
+    std::string res;
+    for (int i = 0; i < BOARD_ROWS; i++) {
+        for (int j = 0; j < BOARD_COLUMNS; j++) {
+            if (matrix[i][j].hasValue())
+                res += matrix[i][j].getValue() + '0';
+            else
+                res += EMPTY_SQUARE;
+        }
+    }
+    return res;
 }
 
 // Prints the sudoku board.
@@ -236,16 +265,18 @@ void Board::print() {
 }
 
 // Inserts a new value in the Board.
-inline void Board::insert(Position& pos) {
-    insert(pos.getRow(), pos.getColumn(), pos.getValue());
+// Returns true if a contradiction was found, false otherwise.
+inline bool Board::insert(Position& pos) {
+    return insert(pos.getRow(), pos.getColumn(), pos.getValue());
 }
 
 // Inserts a new value in the Board.
-void Board::insert(int16_t row, int16_t column, int16_t value) {
+// Returns true if a contradiction was found, false otherwise.
+bool Board::insert(int16_t row, int16_t column, int16_t value) {
     matrix[row][column].setValue(value);
-    update(row, column, value, false);
     Position newLog(row, column, value); // creates a new log to document
     log.push(newLog); // the change in the board
+    return update(row, column, value, false);
 }
 
 // Removes a value in the Board.
@@ -307,14 +338,16 @@ inline bool Board::updateBlock(int16_t block, int16_t value, bool availability) 
 
 // Updates the availability of all squares in the affected area of the given row
 // and column (including the associated block).
-void Board::update(int16_t row, int16_t column, int16_t value, bool availability) {
+// Returns true if a contradiction is found (as in, empty square with no possible values).
+bool Board::update(int16_t row, int16_t column, int16_t value, bool availability) {
     if (value < MIN_VALUE || value > MAX_VALUE)
         throw std::runtime_error("Board::update: value out of range.");
     if (!inBounds(row, column))
         throw std::runtime_error("Board::update: position out of board.\n");
-    updateRow(row, value, availability);
-    updateColumn(column, value, availability);
-    updateBlock(blocks.getBlock(row, column), value, availability);
+    bool foundContradiction = updateRow(row, value, availability);
+    foundContradiction |= updateColumn(column, value, availability);
+    foundContradiction |= updateBlock(blocks.getBlock(row, column), value, availability);
+    return foundContradiction;
 }
 
 // Checks whether or not a position is within bounds.
@@ -330,4 +363,20 @@ void Board::blockInfo() {
     std::cout << "\n";
     blocks.printBlockBoard();
     std::cout << '\n';
+}
+
+// Returns a reference to the square with the least possible values.
+// Returns NULL if all squares are filled.
+Square* Board::minAvailability() {
+    Square* minSquare = NULL;
+    int16_t min = MAX_VALUE - MIN_VALUE + 2; // random starting value above the total availability
+    for (int i = 0; i < BOARD_ROWS; i++) {
+        for (int j = 0; j < BOARD_COLUMNS; j++) {
+            if (matrix[i][j].hasValue()) continue; // rule out filled squares
+            if (matrix[i][j].totalAvailable() >= min) continue; // only want the min
+            minSquare = &matrix[i][j];
+            min = matrix[i][j].totalAvailable();
+        }
+    }
+    return minSquare;
 }
