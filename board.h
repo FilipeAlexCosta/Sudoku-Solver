@@ -3,6 +3,7 @@
 
 #include <array>
 #include <string>
+#include <stack>
 
 #define BOARD_ROWS 9
 #define BOARD_COLUMNS 9
@@ -25,12 +26,14 @@ class Position {
         int16_t row, column, value;
 };
 
+typedef std::stack<Position> Changelog;
+
 class Square {
     public:
         Square();
         inline int16_t getValue();
         bool setValue(int16_t setValue);
-        inline void updateAvailable(int16_t unavailableValue, bool availability);
+        inline int16_t updateAvailable(int16_t unavailableValue, bool availability);
         inline bool isAvailable(int16_t unavailableValue);
         inline int16_t totalAvailable();
     private:
@@ -76,10 +79,11 @@ class Board {
         void blockInfo();
     private:
         Square matrix[BOARD_ROWS][BOARD_COLUMNS];
+        Changelog log;
         BlockInfo blocks;
-        inline void updateRow(int16_t row, int16_t value, bool availability);
-        inline void updateColumn(int16_t row, int16_t value, bool availability);
-        inline void updateBlock(int16_t block, int16_t value, bool availability);
+        inline bool updateRow(int16_t row, int16_t value, bool availability);
+        inline bool updateColumn(int16_t row, int16_t value, bool availability);
+        inline bool updateBlock(int16_t block, int16_t value, bool availability);
         void update(int16_t row, int16_t column, int16_t value, bool availability);
         bool inBounds(int16_t row, int16_t column);
 };

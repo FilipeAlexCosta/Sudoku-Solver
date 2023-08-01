@@ -71,10 +71,12 @@ bool Square::setValue(int16_t setValue) {
 }
 
 // Removes a possible value for the square.
+// Returns the number of possibilities left.
 // If the value is out of range, causes undefined behaviour.
-inline void Square::updateAvailable(int16_t unavailableValue, bool availability) {
+inline int16_t Square::updateAvailable(int16_t unavailableValue, bool availability) {
     available[unavailableValue] = availability;
     availableQuant = availableQuant - 1 * (!availability);
+    return availableQuant;
 }
 
 // Returns whether a value is available or not.
@@ -242,6 +244,8 @@ inline void Board::insert(Position& pos) {
 void Board::insert(int16_t row, int16_t column, int16_t value) {
     matrix[row][column].setValue(value);
     update(row, column, value, false);
+    Position newLog(row, column, value); // creates a new log to document
+    log.push(newLog); // the change in the board
 }
 
 // Removes a value in the Board.
@@ -251,28 +255,54 @@ inline void Board::remove(Position& pos) {
 
 // Removes a value in the Board.
 void Board::remove(int16_t row, int16_t column) {
-    if (matrix[row][column].getValue() == UNDEFINED)
-        throw std::runtime_error("Board::remove: the selected square was not set in the first place.\n");
+    if (log.empty())
+        throw std::runtime_error("Board::remove: cannot remove from an empty board.\n");
+    if (log.top().getRow() != row && log.top().getColumn() != column)
+        throw std::runtime_error("Board::remove: can only remove the last changed square.\n");
     update(row, column, matrix[row][column].getValue(), true);
     matrix[row][column].setValue(UNDEFINED);
 }
 
 // Updates the availability of all squares in the row.
-inline void Board::updateRow(int16_t row, int16_t value, bool availability) {
-    for (int j = 0; j < BOARD_COLUMNS; j++)
-        matrix[row][j].updateAvailable(value, availability);
+// Returns true if a contradiction was encountered, false otherwise.
+inline bool Board::updateRow(int16_t row, int16_t value, bool availability) {
+    int16_t res = 0;
+    for (int j = 0; j < BOARD_COLUMNS; j++) {
+        // update the square and get the number of available values left
+        int16_t squareRes = matrix[row][j].updateAvailable(value, availability);
+        squareRes |= matrix[row][j].getValue(); // get the value of the square
+        squareRes = !squareRes; // if the value is not set and there are no more possibilities
+        res |= squareRes; // that means we have reached a contradiction
+    }
+    return static_cast<bool>(res);
 }
 
 // Updates the availability of all squares in the column.
-inline void Board::updateColumn(int16_t column, int16_t value, bool availability) {
-    for (int i = 0; i < BOARD_ROWS; i++)
-        matrix[i][column].updateAvailable(value, availability);
+// Returns true if a contradiction was encountered, false otherwise.
+inline bool Board::updateColumn(int16_t column, int16_t value, bool availability) {
+    int16_t res = 0;
+    for (int i = 0; i < BOARD_ROWS; i++) {
+        // update the square and get the number of available values left
+        int16_t squareRes = matrix[i][column].updateAvailable(value, availability);
+        squareRes |= matrix[i][column].getValue(); // get the value of the square
+        squareRes = !squareRes; // if the value is not set and there are no more possibilities
+        res |= squareRes; // that means we have reached a contradiction
+    }
+    return static_cast<bool>(res);
 }
 
 // Updates the availability of all squares in the block.
-inline void Board::updateBlock(int16_t block, int16_t value, bool availability) {
-    for (auto it = blocks.begin(block); it != blocks.end(block); ++it)
-        matrix[it->getRow()][it->getColumn()].updateAvailable(value, availability);
+// Returns true if a contradiction was encountered, false otherwise.
+inline bool Board::updateBlock(int16_t block, int16_t value, bool availability) {
+    int16_t res = 0;
+    for (auto it = blocks.begin(block); it != blocks.end(block); ++it) {
+        // update the square and get the number of available values left
+        int16_t squareRes = matrix[it->getRow()][it->getColumn()].updateAvailable(value, availability);
+        squareRes |= matrix[it->getRow()][it->getColumn()].getValue(); // get the value of the square
+        squareRes = !squareRes; // if the value is not set and there are no more possibilities
+        res |= squareRes; // that means we have reached a contradiction
+    }
+    return (static_cast<bool>(res));
 }
 
 // Updates the availability of all squares in the affected area of the given row
