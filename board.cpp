@@ -296,7 +296,7 @@ void Board::print() {
 // Inserts a new value in the Board.
 // Returns true if a contradiction was found, false otherwise.
 inline bool Board::insert(Position& pos, bool debug) {
-    if (debug ) {
+    if (debug) {
         std::cout << "Inserted: ";
         pos.print();
     }
