@@ -34,6 +34,26 @@ inline int16_t Position::getValue() {
     return value;
 }
 
+// Sets the row of a position.
+inline void Position::setRow(int16_t setRow) {
+    row = setRow;
+}
+
+// Sets the column of a position.
+inline void Position::setColumn(int16_t setColumn) {
+    column = setColumn;
+}
+
+// Sets the value of a position.
+inline void Position::setValue(int16_t setValue) {
+    value = setValue;
+}
+
+// Returns true if all fields of position are UNDEFINED.
+inline bool Position::isUndefined() {
+    return !(row != UNDEFINED || column != UNDEFINED || value != UNDEFINED);
+}
+
 // Prints a position.
 inline void Position::print() {
     std::cout << '(' << row << ", " << column << ", " << value << ")\n";
@@ -45,7 +65,7 @@ inline void Position::print() {
 
 // Initializes an empty square.
 Square::Square() {
-    value = UNFILLED;
+    value = UNDEFINED;
     availableQuant = MAX_VALUE - MIN_VALUE + 1;
     for (int i = 0; i < MIN_VALUE; i++)
         available[i] = false;
@@ -68,12 +88,21 @@ inline int16_t Square::getValue() {
 // Returns true if a new value was set, false otherwise.
 // If the value is not in range, throws std::runtime_error.
 bool Square::setValue(int16_t setValue) {
-    if (setValue < MIN_VALUE || setValue > MAX_VALUE)
+    if ((setValue < MIN_VALUE || setValue > MAX_VALUE) && setValue != UNDEFINED)
         throw std::runtime_error("Square::setValue: value out of range.");
-    if (setValue != UNFILLED && !isAvailable(setValue))
+    if (setValue != UNDEFINED && !isAvailable(setValue))
         return false;
     value = setValue;
     return true;
+}
+
+// Returns the next value available.
+// If there is no next value, UNDEFINED is returned.
+int16_t Square::nextValue(int16_t current) {
+    if (current == MAX_VALUE) return UNDEFINED;
+    for (int16_t i = 1; current + i <= MAX_VALUE; i++)
+        if (available[current + i]) return current + i;
+    return UNDEFINED;
 }
 
 // Removes a possible value for the square.
@@ -153,7 +182,7 @@ BlockInfo::BlockInfo() {
             int currentBlock = block;
             for (int columnRepeat = 0; columnRepeat < 3; columnRepeat++) {
                 for (int j = columnRepeat * blockWidth; j < (columnRepeat + 1) * blockWidth; j++) {
-                    Position newPos(i, j, UNFILLED);
+                    Position newPos(i, j, UNDEFINED);
                     blockBoard[i][j] = currentBlock;
                     blocks[currentBlock].append(newPos);
                 }
@@ -266,7 +295,11 @@ void Board::print() {
 
 // Inserts a new value in the Board.
 // Returns true if a contradiction was found, false otherwise.
-inline bool Board::insert(Position& pos) {
+inline bool Board::insert(Position& pos, bool debug) {
+    if (debug ) {
+        std::cout << "Inserted: ";
+        pos.print();
+    }
     return insert(pos.getRow(), pos.getColumn(), pos.getValue());
 }
 
@@ -280,7 +313,11 @@ bool Board::insert(int16_t row, int16_t column, int16_t value) {
 }
 
 // Removes a value in the Board.
-inline void Board::remove(Position& pos) {
+inline void Board::remove(Position& pos, bool debug) {
+    if (debug) {
+        std::cout << "Removed: ";
+        pos.print();
+    }
     remove(pos.getRow(), pos.getColumn());
 }
 
@@ -292,6 +329,14 @@ void Board::remove(int16_t row, int16_t column) {
         throw std::runtime_error("Board::remove: can only remove the last changed square.\n");
     update(row, column, matrix[row][column].getValue(), true);
     matrix[row][column].setValue(UNDEFINED);
+    log.pop();
+}
+
+// Returns a reference to the square denoted by pos.
+inline Square* Board::getSquare(Position& pos) {
+    if (!inBounds(pos.getRow(), pos.getColumn()))
+        throw std::runtime_error("Board::getSquare: position is out of board bounds.\n");
+    return &matrix[pos.getRow()][pos.getColumn()];
 }
 
 // Updates the availability of all squares in the row.
@@ -365,18 +410,55 @@ void Board::blockInfo() {
     std::cout << '\n';
 }
 
-// Returns a reference to the square with the least possible values.
-// Returns NULL if all squares are filled.
-Square* Board::minAvailability() {
-    Square* minSquare = NULL;
-    int16_t min = MAX_VALUE - MIN_VALUE + 2; // random starting value above the total availability
+// Solves the sudoku puzzle and prints it.
+// If debug is true, prints the changelog in reverse.
+void Board::solve(bool debug) {
+    recursiveSolver(debug);
+    if (debug) {
+        printLog();
+        std::cout << '\n';
+    }
+    print();
+}
+
+// Returns a reference to a position where the square with the least possibilities is.
+// Returns an undefined position if all squares are filled.
+// Remember to delete the position afterwards.
+Position* Board::minAvailability() {
+    Position* pos = new Position();
+    int16_t min = MAX_VALUE - MIN_VALUE + 5; // random starting value above the total availability
     for (int i = 0; i < BOARD_ROWS; i++) {
         for (int j = 0; j < BOARD_COLUMNS; j++) {
             if (matrix[i][j].hasValue()) continue; // rule out filled squares
             if (matrix[i][j].totalAvailable() >= min) continue; // only want the min
-            minSquare = &matrix[i][j];
+            pos->setRow(i);
+            pos->setColumn(j);
             min = matrix[i][j].totalAvailable();
         }
     }
-    return minSquare;
+    return pos;
+}
+
+// Recursively solves the sudoku puzzle.
+bool Board::recursiveSolver(bool debug) {
+    Position* minPosition = minAvailability();
+    if (minPosition->isUndefined()) return true; // If there are no squares left, it's solved
+    Square* minSquare = getSquare(*minPosition);
+    int16_t i = MIN_VALUE;
+    for (auto it = minSquare->begin(); it != minSquare->end(); ++it, ++i) {
+        if (!(*it)) continue; // if value is not available, skip it
+        minPosition->setValue(i); // otherwise insert it. If the insertion does not cause a contradiction
+        if (!insert(*minPosition, debug) && recursiveSolver(debug)) return true; // go down a layer
+        remove(*minPosition, debug); // otherwise, if a contradiction appears, remove the inserted value
+    }
+    return false; // handles "nested" contradictions
+}
+
+// Destructively prints the changelog in reverse.
+void Board::printLog() {
+    while (!log.empty()) {
+        std::cout << log.size() - 1 << ": "; // "idx: (row, col, val)"
+        log.top().print();
+        log.pop();
+    }
 }
