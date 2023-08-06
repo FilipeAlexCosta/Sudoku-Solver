@@ -110,7 +110,7 @@ int16_t Square::nextValue(int16_t current) {
 // If the value is out of range, causes undefined behaviour.
 inline int16_t Square::updateAvailable(int16_t unavailableValue, bool availability) {
     if (availability ^ available[unavailableValue]) // checks if a change actually happened
-        availableQuant += ~1 * (!availability) + 1 * availability;
+        availableQuant += -1 * (!availability) + 1 * availability;
     available[unavailableValue] = availability;
     return availableQuant;
 }
