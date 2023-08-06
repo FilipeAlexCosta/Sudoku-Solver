@@ -86,7 +86,7 @@ class Board {
         void remove(int16_t row, int16_t column);
         inline Square* getSquare(Position& pos);
         void blockInfo();
-        void solve(bool debug = 0);
+        void solve(bool debug = false);
     private:
         Square matrix[BOARD_ROWS][BOARD_COLUMNS];
         Changelog log;
@@ -97,7 +97,7 @@ class Board {
         bool update(int16_t row, int16_t column, int16_t value, bool availability);
         bool inBounds(int16_t row, int16_t column);
         Position* minAvailability();
-        bool recursiveSolver(bool debug = 0);
+        bool recursiveSolver(bool debug = false);
         void printLog();
 };
 

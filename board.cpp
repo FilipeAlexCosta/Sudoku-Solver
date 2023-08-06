@@ -109,8 +109,9 @@ int16_t Square::nextValue(int16_t current) {
 // Returns the number of possibilities left.
 // If the value is out of range, causes undefined behaviour.
 inline int16_t Square::updateAvailable(int16_t unavailableValue, bool availability) {
+    if (availability ^ available[unavailableValue]) // checks if a change actually happened
+        availableQuant += ~1 * (!availability) + 1 * availability;
     available[unavailableValue] = availability;
-    availableQuant = availableQuant - 1 * (!availability);
     return availableQuant;
 }
 
@@ -280,7 +281,10 @@ std::string Board::getBoardString() {
 void Board::print() {
     for (int i = 0; i < BOARD_ROWS; i++) {
         for (int j = 0; j < (BOARD_COLUMNS); j++) {
-            std::cout << matrix[i][j].getValue();
+            if (matrix[i][j].getValue() == UNDEFINED)
+                std::cout << EMPTY_SQUARE;
+            else
+                std::cout << matrix[i][j].getValue();
             if ((j + 1) % 3) std::cout << ' ';
             if (!((j + 1) % 3) && j != BOARD_COLUMNS - 1) std::cout << '|';
         }

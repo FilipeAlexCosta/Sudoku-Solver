@@ -6,6 +6,7 @@ int main() {
     std::string line;
     std::getline(std::cin, line);
     myBoard.boardString(line);
+    myBoard.print();
     myBoard.solve(true);
     std::cout << "\nI: " << line << "\nO: " << myBoard.getBoardString() << '\n';
     return 0;
