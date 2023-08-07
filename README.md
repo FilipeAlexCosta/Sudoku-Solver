@@ -15,5 +15,5 @@ Their relative order does not matter, but if used must appear before the boardSt
 If "-p" is active then board is printed to the screen before and after being solved.
 
 If "-d" is active, all insertions and removals will be printed during the solving process
-in a format Inserted: (row, column, value) or Removed: (row, column, value)
+in a format Inserted: (row, column, value) or Removed: (row, column, value).
 In addition to that, all final moves will be printed from newest to oldest.
