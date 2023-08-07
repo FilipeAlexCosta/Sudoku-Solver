@@ -12,6 +12,7 @@
 #define MIN_VALUE 1
 #define MAX_VALUE 9
 #define UNDEFINED -1
+#define IS_AVAILABLE(myInt) !(static_cast<bool>(myInt))
 
 class Position {
     public:
@@ -37,16 +38,15 @@ class Square {
         inline bool hasValue();
         inline int16_t getValue();
         bool setValue(int16_t setValue);
-        int16_t nextValue(int16_t current);
         inline int16_t updateAvailable(int16_t unavailableValue, bool availability);
         inline bool isAvailable(int16_t unavailableValue);
         inline int16_t totalAvailable();
-        inline bool* begin();
-        inline bool* end();
+        inline int16_t* begin();
+        inline int16_t* end();
     private:
         int16_t value;
         int16_t availableQuant;
-        std::array<bool, MAX_VALUE + 1> available;
+        std::array<int16_t, MAX_VALUE + 1> available;
 };
 
 class Block {

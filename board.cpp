@@ -68,9 +68,9 @@ Square::Square() {
     value = UNDEFINED;
     availableQuant = MAX_VALUE - MIN_VALUE + 1;
     for (int i = 0; i < MIN_VALUE; i++)
-        available[i] = false;
+        available[i] = UNDEFINED; // set unused values to undefined
     for (int i = MIN_VALUE; i <= MAX_VALUE; i++)
-        available[i] = true;
+        available[i] = 0; // set the rest to 0
 }
 
 // Returns true if the square's value has been set, false otherwise.
@@ -96,29 +96,22 @@ bool Square::setValue(int16_t setValue) {
     return true;
 }
 
-// Returns the next value available.
-// If there is no next value, UNDEFINED is returned.
-int16_t Square::nextValue(int16_t current) {
-    if (current == MAX_VALUE) return UNDEFINED;
-    for (int16_t i = 1; current + i <= MAX_VALUE; i++)
-        if (available[current + i]) return current + i;
-    return UNDEFINED;
-}
-
-// Removes a possible value for the square.
+// Removes or adds a possible value for the square.
 // Returns the number of possibilities left.
 // If the value is out of range, causes undefined behaviour.
 inline int16_t Square::updateAvailable(int16_t unavailableValue, bool availability) {
-    if (availability ^ available[unavailableValue]) // checks if a change actually happened
-        availableQuant += -1 * (!availability) + 1 * availability;
-    available[unavailableValue] = availability;
+    bool oldAvailability = IS_AVAILABLE(available[unavailableValue]);
+    available[unavailableValue] += 1 * (!availability) + -1 * availability;
+    
+    if (oldAvailability ^ IS_AVAILABLE(available[unavailableValue]))
+        availableQuant += -1 * (available[unavailableValue] > 0) + 1 * (available[unavailableValue] == 0);
     return availableQuant;
 }
 
 // Returns whether a value is available or not.
 // If the value is out of range, causes undefined behaviour.
 inline bool Square::isAvailable(int16_t unavailableValue) {
-    return available[unavailableValue];
+    return IS_AVAILABLE(available[unavailableValue]);
 }
 
 // Returns the total number of available values for the square.
@@ -127,12 +120,12 @@ inline int16_t Square::totalAvailable() {
 }
 
 // Returns an iterator to the beginning of the availability container.
-inline bool* Square::begin() {
+inline int16_t* Square::begin() {
     return &available[MIN_VALUE];
 }
 
 // Returns the past-the-end iterator of the availability container.
-inline bool* Square::end() {
+inline int16_t* Square::end() {
     return (&available[MAX_VALUE]) + 1;
 }
 
@@ -450,7 +443,7 @@ bool Board::recursiveSolver(bool debug) {
     Square* minSquare = getSquare(*minPosition);
     int16_t i = MIN_VALUE;
     for (auto it = minSquare->begin(); it != minSquare->end(); ++it, ++i) {
-        if (!(*it)) continue; // if value is not available, skip it
+        if (!IS_AVAILABLE(*it)) continue; // if value is not available, skip it
         minPosition->setValue(i); // otherwise insert it. If the insertion does not cause a contradiction
         if (!insert(*minPosition, debug) && recursiveSolver(debug)) return true; // go down a layer
         remove(*minPosition, debug); // otherwise, if a contradiction appears, remove the inserted value
