@@ -272,6 +272,7 @@ std::string Board::getBoardString() {
 
 // Prints the sudoku board.
 void Board::print() {
+    std::cout << '\n';
     for (int i = 0; i < BOARD_ROWS; i++) {
         for (int j = 0; j < (BOARD_COLUMNS); j++) {
             if (matrix[i][j].getValue() == UNDEFINED)
@@ -288,6 +289,7 @@ void Board::print() {
             std::cout << '\n';
         }
     }
+    std::cout << '\n';
 }
 
 // Inserts a new value in the Board.
@@ -409,13 +411,13 @@ void Board::blockInfo() {
 
 // Solves the sudoku puzzle and prints it.
 // If debug is true, prints the changelog in reverse.
-void Board::solve(bool debug) {
+void Board::solve(bool debug, bool toPrint) {
     recursiveSolver(debug);
     if (debug) {
         printLog();
         std::cout << '\n';
     }
-    print();
+    if (toPrint) print();
 }
 
 // Returns a reference to a position where the square with the least possibilities is.

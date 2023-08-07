@@ -86,7 +86,7 @@ class Board {
         void remove(int16_t row, int16_t column);
         inline Square* getSquare(Position& pos);
         void blockInfo();
-        void solve(bool debug = false);
+        void solve(bool debug = false, bool toPrint = false);
     private:
         Square matrix[BOARD_ROWS][BOARD_COLUMNS];
         Changelog log;
