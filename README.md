@@ -8,10 +8,6 @@ Usage:
 To execute it just call the program on the command line with a boardString (a string exactly 81 chars long
 where a ' ' represents an empty space on the board, all other chars are numbers in the sudoku game).
 
-Example:
-./compiled_program_name "4     7   9 1       3  96 8  2    1 6  5  8 2     8 7   6  19 3       2 5   4    "
-Should yield: "465823791798165234123479658872634519631597842954218376246751983317986425589342167"
-
 Flags:
 There are two possible flags you can use: "-d" and/or "-p".
 Their relative order does not matter, but if used must appear before the boardString.
