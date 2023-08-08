@@ -441,15 +441,22 @@ Position* Board::minAvailability() {
 // Recursively solves the sudoku puzzle.
 bool Board::recursiveSolver(bool debug) {
     Position* minPosition = minAvailability();
-    if (minPosition->isUndefined()) return true; // If there are no squares left, it's solved
+    if (minPosition->isUndefined()) {
+        delete minPosition;
+        return true; // If there are no squares left, it's solved
+    }
     Square* minSquare = getSquare(*minPosition);
     int16_t i = MIN_VALUE;
     for (auto it = minSquare->begin(); it != minSquare->end(); ++it, ++i) {
         if (!IS_AVAILABLE(*it)) continue; // if value is not available, skip it
         minPosition->setValue(i); // otherwise insert it. If the insertion does not cause a contradiction
-        if (!insert(*minPosition, debug) && recursiveSolver(debug)) return true; // go down a layer
+        if (!insert(*minPosition, debug) && recursiveSolver(debug)) {
+            delete minPosition;
+            return true; // go back up
+        }
         remove(*minPosition, debug); // otherwise, if a contradiction appears, remove the inserted value
     }
+    delete minPosition;
     return false; // handles "nested" contradictions
 }
 
